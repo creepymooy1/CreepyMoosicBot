@@ -1,6 +1,6 @@
 # CreepyMusicBot
 Private bot that plays and queues music
-CreepyMusicBot Commands! Features as of 4/17/23:
+Features as of 4/17/23:
 
 
     !play [url or query]: Plays a song from YouTube.
