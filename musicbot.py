@@ -244,4 +244,4 @@ def download_audio(url):
         info = ydl.extract_info(url, download=False)
         return os.path.join(script_dir, f"audio-{info['id']}.mp3")
 
-bot.run('Njg4NTY2MTgwNjc5OTA5NDgw.GuRQV8.wfjyVAaJk8RZAdoQt6KLdZD_-ZquZYre3p3oSg')
+bot.run('Bot token here')
