@@ -1,5 +1,5 @@
 # CreepyMusicBot
-Private bot that plays and queues music!
+Private discord bot using discord.py that plays and queues music!
 
 Features as of 4/17/23:
 
