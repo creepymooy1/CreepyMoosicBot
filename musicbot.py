@@ -2,41 +2,31 @@ import os
 import discord
 from discord.ext import commands
 from discord import Embed
-import yt_dlp  # YouTube video downloader
+import yt_dlp
 import re
 import asyncio
-from youtube_search import YoutubeSearch  # library to search YouTube videos
+from youtube_search import YoutubeSearch
 
-# Enable all Discord API intents
 intents = discord.Intents.all()
-
-# Initialize the Discord bot with a command prefix and intents
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Create dictionaries to store the currently playing song and the song queue
 currently_playing = {}
 song_queue = {}
-
-# Store search results from YouTube videos
 bot.search_results = {}
 
-# Event listener for when the bot is ready to use
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
 
-# Command to remove a song from the queue
 @bot.command()
 async def removequeue(ctx, number: int):
     guild_id = ctx.guild.id
     if guild_id in song_queue and 1 < number <= len(song_queue[guild_id]):
-        # Remove the song from the queue
         removed_song = song_queue[guild_id].pop(number - 1)
         await ctx.send(f"Removed from queue: {removed_song['title']}")
     else:
         await ctx.send("Invalid queue position.")
 
-# Command to pause the currently playing song
 @bot.command()
 async def pause(ctx):
     voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -46,7 +36,6 @@ async def pause(ctx):
     else:
         await ctx.send("Nothing is currently playing.")
 
-# Command to resume the currently paused song
 @bot.command()
 async def resume(ctx):
     voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -56,13 +45,11 @@ async def resume(ctx):
     else:
         await ctx.send("Music is not paused.")
 
-# Command to check the bot's latency
 @bot.command()
 async def ping(ctx):
     latency = round(bot.latency * 1000)
     await ctx.send(f"Pong! ({latency} ms)")
 
-# Command to play a song from YouTube
 @bot.command()
 async def play(ctx, *, query):
     global song_queue
@@ -75,21 +62,17 @@ async def play(ctx, *, query):
     voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
 
     if voice_client is None:
-        # Connect to the voice channel if not already connected
         voice_client = await channel.connect()
 
-    # Search for the YouTube video
     video_info = search_youtube(query)
     if not video_info:
         await ctx.send("No video found.")
         return
 
-    # Initialize the song queue for the guild if it does not exist
     if ctx.guild.id not in song_queue:
         song_queue[ctx.guild.id] = []
 
     if not voice_client.is_playing() and not voice_client.is_paused():
-        # If nothing is currently playing, start playing the requested song
         song_queue[ctx.guild.id].append(video_info)
         status_embed = Embed(
             title="Searching and downloading the song...    <a:discordloading:1097456624341360660>",
@@ -97,9 +80,7 @@ async def play(ctx, *, query):
         )
         status_message = await ctx.send(embed=status_embed)
         await play_next_song(ctx, ctx.guild.id, voice_client, status_message)
-
     else:
-			# If something is currently playing, add the song to the queue
         song_queue[ctx.guild.id].insert(1, video_info)
         status_embed = Embed(
             title="Added to the queue! <a:pandahappy:1097457470122762291>",
@@ -107,7 +88,7 @@ async def play(ctx, *, query):
             color=discord.Color.blue()
         )
         await ctx.send(embed=status_embed)
-#Command to stop playing and clear the song queue
+
 @bot.command()
 async def stop(ctx):
     global song_queue
@@ -117,11 +98,10 @@ async def stop(ctx):
         song_queue[ctx.guild.id] = []  # clear the song queue for the guild
         del currently_playing[ctx.guild.id]
         await voice_client.disconnect()
-        await ctx.send("Stopped playing, cleared the queue, and disconnected the bot. Thanks for using CreepyMusicBot! <a:rainbowdance:1097455830804205588>")
+        await ctx.send("Stopped playing, cleared the queue, and disconnected the bot. Thanks for using CreepyMoosicBot! <a:rainbowdance:1097455830804205588>")
     else:
         await ctx.send("Nothing is currently playing.")
 
-#Command to display the song queue
 @bot.command()
 async def queue(ctx):
     guild_id = ctx.guild.id
@@ -129,24 +109,23 @@ async def queue(ctx):
         queue_embed = Embed(title="Song Queue", color=discord.Color.blue())
 
         if guild_id in currently_playing:
-					# Display the currently playing song first
             playing_song = currently_playing[guild_id]
             queue_embed.add_field(
                 name=f"1. {playing_song['title']} (Now Playing!)",
                 value=f"Duration: `{playing_song['duration']}` seconds <a:rainbowdance:1097455830804205588>",
                 inline=False
             )
-				# Display the rest of the song queue
+
         for idx, song in enumerate(song_queue[guild_id]):
             queue_embed.add_field(name=f"{idx + 2}. {song['title']}", value=f"Duration: {song['duration']} seconds", inline=False)
         
         await ctx.send(embed=queue_embed)
     else:
         await ctx.send("The queue is empty.")
-#Command to display the available commands
+
 @bot.command()
 async def commands(ctx):
-    embed = discord.Embed(title="CreepyMusicBot Commands! made by Creepymooy#0865", color=discord.Color.blue())
+    embed = discord.Embed(title="CreepyMoosicBot Commands! made by Creepymooy#0865", color=discord.Color.blue())
     embed.add_field(name="!play", value="Plays a song from YouTube.", inline=False)
     embed.add_field(name="!stop", value="Stops playing and clears the song queue.", inline=False)
     embed.add_field(name="!skip", value="Skips the current song.", inline=False)
@@ -159,7 +138,6 @@ async def commands(ctx):
     embed.add_field(name="!search", value="Provides the top 10 URLs for a given youtube query.", inline=False)
     await ctx.send(embed=embed)
 
-#command for user to skip song currently playing
 @bot.command()
 async def skip(ctx):
     voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
@@ -169,7 +147,28 @@ async def skip(ctx):
     else:
         await ctx.send("Nothing is currently playing.")
 
-#command for user to check what is currently playing
+@bot.command()
+async def announce(ctx, *, message):
+    # Only allow user with the specified ID to use the command
+    if ctx.author.id != 139879324470870016:
+        await ctx.send("You don't have permission to use this command.")
+        return
+
+    # Iterate through all guilds the bot is in
+    for guild in bot.guilds:
+        # Find the first channel with "general" in its name
+        general_channel = None
+        for channel in guild.text_channels:
+            if "general" in channel.name.lower():
+                general_channel = channel
+                break
+
+        # If a channel with "general" in its name is found, send the message
+        if general_channel:
+            await general_channel.send(message)
+        else:
+            print(f"No channel with 'general' in its name was found in guild: {guild.name}")
+
 @bot.command()
 async def playing(ctx):
     if ctx.guild.id in currently_playing:
@@ -223,7 +222,7 @@ async def play_next_song(ctx, guild_id, voice_client, status_message=None):
 
         await asyncio.sleep(1)  # Add a 1-second delay before starting the playback
 
-        options = "-bufsize 512k"  # Increase buffer size to 512 KB
+        options = "-bufsize 512k"
         voice_client.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=audio_file, options=options), after=after_playing)
         song_queue[guild_id].pop(0)
     except Exception as e:
@@ -252,7 +251,6 @@ def search_youtube(query):
 
 def download_audio(url):
     script_dir = os.path.dirname(os.path.abspath(__file__))
-	# processing codec, settings for downloading 
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{
@@ -268,5 +266,4 @@ def download_audio(url):
         info = ydl.extract_info(url, download=False)
         return os.path.join(script_dir, f"audio-{info['id']}.mp3")
 
-# insert bot token here to run
-bot.run('Bot token here')
+bot.run('Bot Token Here')
