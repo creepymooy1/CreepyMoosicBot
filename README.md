@@ -1,7 +1,7 @@
 # CreepyMusicBot
 Private discord bot using discord.py that plays and queues music!
 
-Features as of 4/17/23:
+Features as of 5/8/23:
 
 
     !play [url or query]: Plays a song from YouTube.
@@ -14,3 +14,4 @@ Features as of 4/17/23:
     !playing: Displays the currently playing song.
     !ping: Pings the bot to check if it's responsive.
     !search [query]: Provides the top 10 URLs for a given youtube query.
+    !announce [message] (Only for authorized users): Sends a message to the "general" channel of all servers, hidden command for maintenance
