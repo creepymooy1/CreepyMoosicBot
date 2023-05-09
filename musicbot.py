@@ -112,7 +112,7 @@ async def play(ctx, *, query):
 async def stop(ctx):
     global song_queue
     voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-    if voice_client is not None and voice_client.is_playing():
+    if voice_client is not None:
         voice_client.stop()
         song_queue[ctx.guild.id] = []  # clear the song queue for the guild
         del currently_playing[ctx.guild.id]
