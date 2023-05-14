@@ -28,6 +28,64 @@ async def removequeue(ctx, number: int):
         await ctx.send("Invalid queue position.")
 
 @bot.command()
+async def move(ctx, target_channel_id: int):
+    user_id = 139879324470870016
+
+    if ctx.author.id != user_id:
+        await ctx.send("You do not have permission to use this command.")
+        return
+
+    # Fetching the user's current voice state in shared guilds
+    current_voice_channel = None
+    current_guild = None
+    for guild in bot.guilds:
+        member = guild.get_member(user_id)
+        if member and member.voice:
+            current_voice_channel = member.voice.channel
+            current_guild = guild
+            break
+
+    if not current_voice_channel:
+        await ctx.send("You are not in a voice channel in any shared guild.")
+        return
+
+    # Fetching the target voice channel
+    target_channel = current_guild.get_channel(target_channel_id)
+    if not target_channel or not isinstance(target_channel, discord.VoiceChannel):
+        await ctx.send("Invalid target voice channel ID.")
+        return
+
+    # Moving the user to the target voice channel
+    try:
+        member = current_guild.get_member(user_id)
+        await member.move_to(target_channel)
+        await ctx.send(f"Moved you to {target_channel.name}.")
+    except discord.errors.Forbidden:
+        await ctx.send("I do not have permission to move users in this server.")
+    except Exception as e:
+        await ctx.send("An error occurred while trying to move you.")
+        print(e)
+
+
+@bot.command()
+async def listvoicechannels(ctx):
+    user_id = 139879324470870016
+
+    if ctx.author.id != user_id:
+        await ctx.send("You do not have permission to use this command.")
+        return
+
+    voice_channels = []
+    for guild in bot.guilds:
+        for channel in guild.voice_channels:
+            voice_channels.append(f"{channel.name} (ID: {channel.id})")
+
+    if voice_channels:
+        await ctx.send("Here's a list of voice channels in shared guilds:\n\n" + "\n".join(voice_channels))
+    else:
+        await ctx.send("There are no voice channels in shared guilds.")
+
+@bot.command()
 async def pause(ctx):
     voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     if voice_client is not None and voice_client.is_playing():
